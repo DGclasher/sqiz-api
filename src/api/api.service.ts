@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
 import * as sharp from 'sharp';
+import * as gs from 'ghostscript-node';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ApiService {
@@ -22,8 +23,14 @@ export class ApiService {
   }
 
   async compressPDF(file: Express.Multer.File) {
-    console.log(file);
-
-    return 'Compress PDF';
+    try {
+      const compressedPDF = await gs.compressPDF(file.buffer);
+      return compressedPDF;
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException(
+        "Couldn't resize the PDF. Please ensure it's a valid PDF file.",
+      );
+    }
   }
 }

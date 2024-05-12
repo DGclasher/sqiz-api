@@ -62,11 +62,29 @@ export class ApiController {
         .addValidator(
           new CustomUploadFileTypeValidator({ fileType: VALID_PDF_TYPES }),
         )
-        .addMaxSizeValidator({ maxSize: MAX_FILE_SIZE })
+        .addMaxSizeValidator({ maxSize: 20_000_000 })
         .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
     )
     file: Express.Multer.File,
+    @Res() res: ExpressResponse,
   ) {
-    return this.apiService.compressPDF(file);
+    try {
+      const fileBuffer = await this.apiService.compressPDF(file);
+      res
+        .status(HttpStatus.OK)
+        .set('Content-Type', file.mimetype)
+        .send(fileBuffer);
+    } catch (error) {
+      throw new HttpException(
+        {
+          error: 'File could not be resized',
+          message: error.message,
+        },
+        HttpStatus.BAD_REQUEST,
+        {
+          cause: error.message,
+        },
+      );
+    }
   }
 }
